@@ -1,0 +1,3 @@
+boto3
+Pillow
+tkcalendar  # optional if you want fancier GUI later (not required)

@@ -15,26 +15,34 @@ resource "aws_s3_bucket" "images"{
   bucket = var.bucket_name
 }
 
-#Block public access by default
-block_public_acls = true
-block_public_policy = true
-restrict_public_buckets = true
+resource "aws_s3_bucket_public_access_block" "my_bucket_block" {
+  bucket = aws_s3_bucket.images.id
 
-lifecyle_rule {
-  enabled = true
-  expiration {
-    days =365
-  }
-
-  id = "expire-one-year"
+  #Block public access by default
+  block_public_acls = true
+  block_public_policy = true
+  restrict_public_buckets = true
 }
 
+resource "aws_s3control_bucket_lifecycle_configuration" "my_bucket_lifecycle" {
+  bucket = aws_s3_bucket.images.id
+
+  rule {
+    id     = "expired_old_objects"
+    status = "Enabled"
+
+    expiration {
+      days = 30
+    }
+  }
+
 # IAM policy allowing S3 GetObject and Rekognition DetectLabels
+}
 data "aws_iam_policy_document" "rekog_s3_policy" {
   statement {
     sid = "AllowS3GetObject"
     actions = [
-    "s3:GetObject"
+    "s3:GetObject",
     "s3:ListBucket"]
     resources = [
     aws_s3_bucket.images.arn,
@@ -54,11 +62,12 @@ data "aws_iam_policy_document" "rekog_s3_policy" {
 }
 
 resource "aws_iam_policy" "rekog_s3_policy" {
-  name = "ImageLabeler_Rekognition_S3_Policy"
+  name   = "ImageLabeler_Rekognition_S3_Policy"
   policy = data.aws_iam_policy_document.rekog_s3_policy.json
 }
 
 # Create IAM user for CLI
+
 resource "aws_iam_user" "cli_user" {
   name = "image_label_cli_user"
   tags = {
@@ -67,7 +76,8 @@ resource "aws_iam_user" "cli_user" {
 }
 
 resource "aws_iam_policy_attachment" "attach_policy" {
-  user      = aws_iam_user.cli_user.name
+  name = "attach_rekog_s3_policy"
+  users      = [aws_iam_user.cli_user.name]
   policy_arn = aws_iam_policy.rekog_s3_policy.arn
-  name = ""
+
 }
