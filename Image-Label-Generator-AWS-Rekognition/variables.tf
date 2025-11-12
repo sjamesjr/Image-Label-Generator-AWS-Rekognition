@@ -9,3 +9,9 @@ variable "bucket_name" {
   type = string
   default = "image-label-bucket"
 }
+
+variable "profile_default" {
+  description = "AWS CLI profile to use"
+  default = "AdministratorAccess-985539787837"
+  type        = string
+}
