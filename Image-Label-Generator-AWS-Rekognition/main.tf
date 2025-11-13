@@ -7,18 +7,23 @@ terraform {
   }
 }
 
-provider "aws" {
-  profile = "default"
+provider "aws"{
+  profile = "AdministratorAccess-985539787837"
   region = var.region
 
 }
 
-resource "aws_s3_bucket" "images"{
-  bucket = var.bucket_name
+resource "aws_s3_bucket_acl" "images"{
+  bucket = "image-label-bucket-${random_id.suffix.hex}"
+  acl = "private"
 }
 
+
+resource "random_id" "suffix" {
+  byte_length = 4
+}
 resource "aws_s3_bucket_public_access_block" "my_bucket_block" {
-  bucket = aws_s3_bucket.images.id
+  bucket = aws_s3_bucket_acl.images.id
 
   #Block public access by default
   block_public_acls = true
@@ -27,7 +32,7 @@ resource "aws_s3_bucket_public_access_block" "my_bucket_block" {
 }
 
 resource "aws_s3control_bucket_lifecycle_configuration" "my_bucket_lifecycle" {
-  bucket = aws_s3_bucket.images.id
+  bucket = aws_s3_bucket_acl.images.id
 
   rule {
     id     = "expired_old_objects"
@@ -47,8 +52,8 @@ data "aws_iam_policy_document" "rekog_s3_policy" {
     "s3:GetObject",
     "s3:ListBucket"]
     resources = [
-    aws_s3_bucket.images.arn,
-    "${aws_s3_bucket.images.arn}/*"
+    aws_s3_bucket_acl.images.acl,
+    "${aws_s3_bucket_acl.images.acl}/*"
     ]
   }
   statement {
