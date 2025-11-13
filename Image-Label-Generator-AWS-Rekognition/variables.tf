@@ -12,6 +12,6 @@ variable "bucket_name" {
 
 variable "profile_default" {
   description = "AWS CLI profile to use"
-  default = "AdministratorAccess-985539787837"
+  default = "default"
   type        = string
 }
